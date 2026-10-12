@@ -91,6 +91,21 @@ Leader election keeps the replicas from conflicting. One replica holds a Kuberne
 
 PostgreSQL supports multiple controller replicas without further configuration. The bundled instance is still a single pod backed by one PVC, so an installation that runs several controllers for availability, against a bundled database, has only moved the single point of failure.
 
+## Tune session quiescence recovery {#session-quiescence-recovery}
+
+When a task settles, the controller commits the task history to PostgreSQL. Then the controller wakes local workers that pause or suspend the Session's {{< gloss "Actor" >}}Actor{{< /gloss >}}. Committed settlements do not wait for the recovery scan interval. Four workers drain durable claims, and PostgreSQL coordinates the work across controller replicas so that one replica handles each claim.
+
+If a controller exits after the commit and before the local wake-up, another replica finds the durable claim on its next recovery scan. The default recovery interval is `1m`. Increasing the interval can delay pause, suspension, and {{< gloss "Snapshot" >}}snapshot{{< /gloss >}} availability after a missed wake-up. With a shorter interval, the controller scans for missed work more often.
+
+Use `KAGENT_SESSION_QUIESCENCE_POLL_INTERVAL` to change only the missed-wake-up recovery interval. The value must be a positive Go duration. The controller retries temporarily blocked work and database errors within one second, regardless of the recovery interval.
+
+```yaml
+controller:
+  env:
+    - name: KAGENT_SESSION_QUIESCENCE_POLL_INTERVAL
+      value: 30s
+```
+
 ## Reserve node pools for Workers
 
 {{< gloss "Worker" >}}Workers{{< /gloss >}} hold running {{< gloss "Actor" >}}Actors{{< /gloss >}}. An Actor that loses its node before it suspends loses its conversation, so the node pools that run Workers need stricter rules than the rest of the cluster.
