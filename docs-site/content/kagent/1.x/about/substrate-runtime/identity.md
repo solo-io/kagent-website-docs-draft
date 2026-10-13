@@ -80,4 +80,4 @@ A share widens what the holder can reach to what the owner can see, and the unde
 Each Actor also carries an identity of its own, addressed as its {{< gloss "Atespace" >}}atespace{{< /gloss >}} and name together. [Sandboxing]({{< link path="about/substrate-runtime/sandboxing" >}}) covers how the router uses that identity to reach the right Worker over mTLS.
 
 > [!IMPORTANT]
-> Agent Substrate authenticates callers but does not authorize them. Any provider that you configure as an authenticated caller can reach every remote procedure call, including destructive ones, so configure only providers whose users require full access to Agent Substrate.
+> Agent Substrate has AccessPolicy resources for global and atespace permissions. kagent does not configure those policies for you. Until you configure Agent Substrate authorization directly, any provider that you configure as an authenticated caller can reach every remote procedure call. This access includes destructive calls, so configure only providers whose users require full access to Agent Substrate.

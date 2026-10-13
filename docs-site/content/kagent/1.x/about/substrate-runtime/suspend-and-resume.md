@@ -15,7 +15,7 @@ An agent spends most of its life waiting. It waits on a person to reply, and it 
 
 - **Suspend**: Writes the Actor's state to a durable snapshot in snapshot storage, then frees its Worker. A running Actor is snapshotted on its Worker. A paused Actor's node-local snapshot is uploaded instead.
 - **Pause**: Takes a short-term snapshot whose files stay on the node. Pausing pins the Actor to that node, because the following resume is prioritized onto the node that holds the snapshot files.
-- **Resume**: Restores a suspended or paused Actor onto a Worker, from its latest snapshot. The common path restores from a snapshot rather than cold-booting the workload.
+- **Resume**: Restores a suspended or paused Actor from its latest snapshot onto a Worker. A `Full` snapshot can restore the running state. A `Data` snapshot starts fresh containers from the ActorTemplate's OCI image and restores the durable volume contents.
 
 The following diagram traces an Actor through those operations, and shows the further path that opens once a snapshot is [pinned by a tag](#checkpoints).
 </br></br>
@@ -38,10 +38,10 @@ Scopes describe only what a snapshot captures, and they are configured per trigg
 
 A **DurableDir volume** is the per-Actor application data surface. Its contents are preserved by the `Data` scope, so they survive a suspend and resume cycle independently of process memory. How many volumes an ActorTemplate can declare depends on its sandbox class. A `microvm` template can declare several, because they are subdirectories of a single shared filesystem. A `gvisor` template is limited to one, until {{< gloss "gVisor" >}}gVisor{{< /gloss >}} accepts more than a single durable mount.
 
-When an Actor resumes from a `Data`-scope snapshot, the ActorTemplate's `onResume.fromData` setting decides where the rest of the guest state comes from. The default is `ColdBoot`, which starts the containers fresh from the container image with the durable volume contents restored over them.
+When an Actor resumes from a `Data`-scope snapshot, Agent Substrate starts fresh containers from the ActorTemplate's OCI image. Then Agent Substrate restores the durable volume contents over them. No separate resume setting changes this behavior.
 
 > [!NOTE]
-> These scopes describe what Agent Substrate supports, not choices that you make. kagent compiles every ActorTemplate with the same snapshot configuration: `Full` on pause, `Data` on commit, `ColdBoot` on resume, and a single DurableDir volume named `data`. The only snapshot setting that you author is the storage location, on the Harness.
+> These scopes describe what Agent Substrate supports, not choices that you make. kagent compiles every ActorTemplate with the same snapshot configuration. The configuration uses `Full` on pause, `Data` on commit, and a single DurableDir volume named `data`. The only snapshot setting that you author is the storage location, on the Harness.
 
 ## Golden and per-Actor snapshots
 
