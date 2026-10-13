@@ -229,6 +229,8 @@ The kagent chart connects the controller to Agent Substrate and creates a Worker
    ```
    The `controller.grpc.reflection` setting lets a gRPC client discover the controller's methods without a local copy of kagent's proto files. The kagent CLI does not need it, because the CLI ships with generated clients for every kagent API. Leave reflection on to explore the API with a general-purpose client such as [grpcurl](https://github.com/fullstorydev/grpcurl), and turn it off for a production installation.
 
+   The chart creates a ServiceAccount for the Worker pods. The chart also sets the WorkerPool `spec.template.serviceAccountName` to the pool name. To use a ServiceAccount that you manage outside the chart, set `substrateWorkerPool.serviceAccount.create` to `false`. Set `substrateWorkerPool.serviceAccount.name` to the ServiceAccount name. The ServiceAccount must exist in the release namespace.
+
    <!--
    > [!NOTE]
    > The kagent chart carries two settings that enable something called `substrate`, and this step sets only the one nested under `controller`. `controller.substrate.enabled` turns on the controller's Agent Substrate integration, which is what lets a Harness run an agent. The top-level `substrate.enabled` is a different toggle that installs Agent Substrate as a subchart of the kagent release, which places most of its resources in the `kagent` namespace while parts of the chart still reference `ate-system`. Leave the top-level setting at its default of `false`, because the preceding steps install Agent Substrate into `ate-system` themselves.
